@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Train Time</title>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/flatly/bootstrap.min.css">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+    <script src="https://code.jquery.com/jquery.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.4/moment.min.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container">
+    <br>
+
+    <!-- Jumbotron -->
+      <div class="jumbotron board-display">
+          <h1 class="text-center">Train Schedule</h1>
+      </div>
+      <div class="row">
+        <!-- Most Recent Train Panel -->
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Current Train Schedule</h3>
+        </div>
+        <div class="panel-body board-display">
+          <div class="row">
+            <table class="table" id='tabletable'>
+            <thead>
+              <tr>
+                <th>Train Name</th>
+                <th>Destination</th>
+                <th>Frequency (Mins)</th>               
+                <th>Next Arrival</th>
+                <th>Minutes Away</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>            
+          </table>       
+          </div>
+        </div>
+      </div>
+      </div>
+      </div>
+      <div class="row">
+
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Add Train</h3>
+        </div>
+        <div class="panel-body">
+
+          <form role="form">
+            <div class="form-group">
+              <label for="name-input">Train Name:</label>
+              <input class="form-control" id="trainID" type="text">
+            </div>
+            <div class="form-group">
+              <label for="destination-input">Destination:</label>
+              <input class="form-control" id="destinationID" type="text">
+            </div>
+            <div class="form-group">
+              <label for="age-input">First Train Time (HH:MM - Military Time):</label>
+              <input class="form-control" id="arrivalTimeID" type="text">
+            </div>
+            <div class="form-group">
+              <label for="comment-input">Frequency (min)</label>
+              <input class="form-control" id="frequencyID" type="text">
+            </div>
+            <button class="btn btn-info" id="Submit" type="submit">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+      </div>
+  </div>
+
+<script>
+      
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCqnL6ClSiLHrFqN4DkMxXkvHIwdpTxwEw",
+    authDomain: "trains-waystation.firebaseapp.com",
+    databaseURL: "https://trains-waystation.firebaseio.com",
+    projectId: "trains-waystation",
+    storageBucket: "trains-waystation.appspot.com",
+    messagingSenderId: "556857533548"
+  };
+  firebase.initializeApp(config);
+
+  var database = firebase.database();
+
+$("#Submit").on("click", function(event) {
+  event.preventDefault();
+
+  trainName = $('#trainID').val().trim();
+  destination = $('#destinationID').val().trim();
+  frequency = $('#frequencyID').val().trim();
+  nextArrival = $('#arrivalTimeID').val().trim();
+
+  console.log(trainName, destination, frequency, nextArrival);
+  //Maths for Time Inputs
+  //Next Arriva
+  var newTrain = {
+    trainName: trainName,
+    destination: destination,
+    frequency: frequency,
+    nextArrival: nextArrival,
+  };
+
+  database.ref().push(newTrain);
+
+  $('#trainID').val("");
+  $('#destinationID').val("");
+  $('#frequencyID').val("");
+  $('#arrivalTimeID').val("");
+});
+
+database.ref().on("child_added", function(childSnapshot,prevChildKey) {
+  var trainName = childSnapshot.val().trainName;
+  var destination = childSnapshot.val().destination;
+  var frequency = childSnapshot.val().frequency;
+  var nextArrival = childSnapshot.val().nextArrival;
+
+var timefrequency = frequency;
+
+var firstTime = nextArrival;
+
+var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+
+var currentTime = moment();
+
+var randomTime = moment().diff(moment(firstTimeConverted), "minutes");
+  console.log(randomTime);
+
+
+  var timeDiv = randomTime%frequency;
+  console.log("Time Remaining: " + timeDiv);
+
+  var minutesLeft = frequency-timeDiv;
+  console.log("Minutes Away: " + minutesLeft);
+
+  var nextTrain = moment().add(minutesLeft, "minutes").format("HH:mm");
+
+  $("#tabletable").append('<tr><td>' + trainName + '</td><td>' + destination + '</td><td>' + frequency + '</td><td>' + nextArrival + '</td><td>' + minutesLeft + '</td></tr>')
+
+});
+
+
+//   var randomTime = moment().diff(moment(nextArrivalCalc), "minutes");
+//   console.log(randomTime);
+
+
+//   var timeDiff = randomTime%frequency;
+//   console.log(timeDiff);
+
+//   var minutesLeft = frequency-timeDiff;
+//   console.log("Minutes Away: " + minutesLeft);
+
+//   var nextTrain = moment().add(minutesLeft, "minutes");
+//   console.log("Arrival: " + moment(nextTrain).format("HH:mm"));
+
+//   var nextTrainformat = moment(nextTrain).format("HH:mm");
+//   console.log(nextTrainformat);
+
+// });
+
+
+// $("#trainBody").append()
+//   database.ref().on("child_added", function(childSnapshot) {
+ 
+
+//       var tableRow = $('<tr>');
+//       console.log(childSnapshot.val());
+//       var tableCols = $('<td>' + trainName + '</td>'
+//                          + '<td>' + destination + '</td>'
+//                           + '<td>' + frequency + '</td>'
+//                            + '<td>' + nextArrival + '</td>'
+//                             );
+//       var tableBody = $('.tableBody');
+//       tableRow.append(tableCols);
+//       tableBody.append(tableRow);
+
+//   });
+
+
+</script>
+
+
+
+</div>
+</body>
